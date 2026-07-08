@@ -1,0 +1,16 @@
+services:
+  webtoepub:
+    # Dùng image đã build & push sẵn lên Docker Hub bởi GitHub Actions (xem
+    # .github/workflows/docker-publish.yml) mỗi khi push lên master — không cần build local
+    # nữa. Đổi "your-dockerhub-username" thành username thật của bạn.
+    image: hajtran//webtoepub-app:latest
+    container_name: webtoepub-app
+    ports:
+      - "3000:3000"
+    volumes:
+      # Bind mount ra thư mục thật trên host để sách/epub/provider đã lưu SỐNG SÓT qua các
+      # lần "docker compose down/up" hoặc "docker rm" container (nếu không mount, mất hết
+      # mỗi lần container bị xoá vì output/data nằm trong filesystem của container).
+      - ./output:/app/output
+      - ./data:/app/data
+    restart: unless-stopped

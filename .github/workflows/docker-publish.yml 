@@ -1,0 +1,53 @@
+name: Build & Push Docker image
+
+# Chạy mỗi khi có push lên nhánh master. Cũng cho phép bấm chạy tay từ tab Actions
+# (workflow_dispatch) để rebuild lại mà không cần push code gì mới.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  # Đổi thành username Docker Hub của bạn, hoặc set qua Settings > Secrets and variables >
+  # Actions > Variables (DOCKERHUB_IMAGE) nếu không muốn hardcode ở đây.
+  IMAGE_NAME: ${{ vars.DOCKERHUB_IMAGE || 'your-dockerhub-username/webtoepub-app' }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Cần buildx để build multi-platform (amd64 + arm64) — hữu ích nếu host bạn chạy là
+      # Raspberry Pi/ARM server, không chỉ máy x86 thông thường.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Tự tạo tag: luôn có "latest", cộng thêm tag theo short commit sha để bạn có thể
+      # rollback về đúng bản build trước đó nếu bản "latest" mới bị lỗi.
+      - name: Extract tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

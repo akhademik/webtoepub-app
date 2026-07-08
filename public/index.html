@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sổ Đóng Sách — Web → EPUB</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="masthead">
+    <div class="masthead-inner">
+      <div class="mark">§</div>
+      <div>
+        <h1>Sổ Đóng Sách</h1>
+        <p class="sub">Ghi lại đường mực trên trang, đóng thành một cuốn EPUB.</p>
+      </div>
+      <button class="home-btn" id="homeBtn" type="button" title="Về màn hình ban đầu">🏠 Trang chủ</button>
+    </div>
+  </div>
+
+  <main class="sheet">
+
+    <!-- SÁCH ĐANG DỞ / ĐÃ XONG -->
+    <section class="card" id="booksPanel" hidden>
+      <div class="card-head">
+        <span class="idx">&#8635;</span>
+        <h2>Sách đã lưu trên máy</h2>
+      </div>
+      <div id="booksList"></div>
+    </section>
+
+    <!-- BƯỚC 0: CHỌN CÁCH LẤY CHƯƠNG -->
+    <section class="card" id="modeChoice">
+      <div class="card-head">
+        <span class="idx">0</span>
+        <h2>Trang này lấy chương kiểu nào?</h2>
+      </div>
+      <div class="mode-options">
+        <label class="mode-card">
+          <input type="radio" name="crawlMode" value="a" />
+          <div class="mode-card-body">
+            <div class="mode-card-title">A — Có trang mục lục đầy đủ</div>
+            <div class="mode-card-desc">Site có 1 trang liệt kê toàn bộ (hoặc phân trang) danh sách chương, thường kèm tên truyện/tác giả/bìa ngay trên đó. App sẽ đọc trang này để lấy hết link chương rồi tải song song — nhanh hơn, biết trước tổng số chương.</div>
+          </div>
+        </label>
+        <label class="mode-card">
+          <input type="radio" name="crawlMode" value="b" />
+          <div class="mode-card-body">
+            <div class="mode-card-title">B — Chỉ có chương 1, bấm "Tiếp" tuần tự</div>
+            <div class="mode-card-desc">Không có trang mục lục riêng (hoặc không muốn dùng) — app bắt đầu từ chương 1, tự bấm theo nút "chương kế" tới khi hết truyện. Bạn tự nhập tên sách/tác giả.</div>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- BƯỚC 1 -->
+    <section class="card" id="step1" hidden>
+      <div class="card-head">
+        <span class="idx">1</span>
+        <h2>Nguồn chương &amp; xem trước</h2>
+        <button class="btn-link" id="changeModeBtn" type="button">← Đổi cách lấy chương</button>
+      </div>
+
+      <div class="provider-bar">
+        <label for="providerSelect" class="provider-label">Provider đã lưu</label>
+        <select id="providerSelect">
+          <option value="">— Chọn nếu đã lưu trước đó —</option>
+        </select>
+      </div>
+
+      <!-- ====== CHỈ HIỆN Ở MODE A ====== -->
+      <div data-mode-only="a">
+        <div class="field">
+          <label for="tocUrl">URL trang mục lục (trang gốc chứa danh sách chương)</label>
+          <input id="tocUrl" class="mono" type="text" placeholder="https://vidu.com/ten-truyen/" />
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="chapterLinkSelector">CSS selector — các link chương trong mục lục</label>
+            <input id="chapterLinkSelector" class="mono" type="text" placeholder="ul.list-chapter a" />
+          </div>
+          <div class="field">
+            <label for="chapterLinkAttr">Attribute chứa URL chương <span class="opt">(mặc định href)</span></label>
+            <input id="chapterLinkAttr" class="mono" type="text" placeholder="href" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="tocNextPageSelector">CSS/XPath selector — nút "trang kế" CỦA MỤC LỤC <span class="opt">(chỉ cần nếu mục lục có phân trang, vd chỉ hiện 50 chương/trang)</span></label>
+          <input id="tocNextPageSelector" class="mono" type="text" placeholder='a.toc-next-page  hoặc  xpath://a[contains(text(),"Sau")]' />
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label for="bookTitleSelector">CSS selector — tên truyện <span class="opt">(trên trang mục lục)</span></label>
+            <input id="bookTitleSelector" class="mono" type="text" placeholder="h1.title" />
+          </div>
+          <div class="field">
+            <label for="authorSelector">CSS selector — tác giả</label>
+            <input id="authorSelector" class="mono" type="text" placeholder=".author" />
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label for="coverSelector">CSS selector — ảnh bìa <span class="opt">(thẻ &lt;img&gt; hoặc &lt;a&gt; đều được)</span></label>
+            <input id="coverSelector" class="mono" type="text" placeholder="img.cover" />
+          </div>
+          <div class="field">
+            <label for="coverAttr">Attribute chứa URL ảnh <span class="opt">(src cho &lt;img&gt;, href nếu bìa là link &lt;a&gt;)</span></label>
+            <input id="coverAttr" class="mono" type="text" placeholder="src" />
+          </div>
+        </div>
+
+        <button class="btn btn-secondary btn-tiny" id="testTocBtn" type="button">Test mục lục (lấy link + tên/tác giả/bìa)</button>
+        <div class="test-next-result" id="testTocResult" hidden></div>
+
+        <div class="field" style="margin-top:1rem">
+          <label for="concurrency">Số chương tải song song cùng lúc</label>
+          <input id="concurrency" type="text" inputmode="numeric" value="5" style="max-width:100px" />
+        </div>
+      </div>
+
+      <!-- ====== CHỈ HIỆN Ở MODE B ====== -->
+      <div data-mode-only="b">
+        <div class="field">
+          <label for="startUrl">URL chương 1</label>
+          <input id="startUrl" class="mono" type="text" placeholder="https://vidu.com/truyen/chuong-1" />
+        </div>
+      </div>
+
+      <!-- ====== CHUNG CHO CẢ 2 MODE (áp dụng ở TRANG CHƯƠNG) ====== -->
+      <div class="grid2">
+        <div class="field">
+          <label for="contentSelector">CSS selector — nội dung chương <span class="opt">(áp dụng trên trang chương, không phải trang mục lục)</span></label>
+          <input id="contentSelector" class="mono" type="text" value="body" />
+          <p class="hint">Mặc định <code>body</code> — script sẽ luôn tự động bị loại bỏ.</p>
+        </div>
+        <div class="field">
+          <label for="titleSelector">CSS selector — tiêu đề chương <span class="opt">(trên trang chương)</span></label>
+          <input id="titleSelector" class="mono" type="text" placeholder="h1.chapter-title" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="removeSelectors">CSS selector cần loại bỏ khỏi nội dung <span class="opt">(quảng cáo, nút chia sẻ, hoặc chính nút "chương kế" nếu nó lọt vào trong khối nội dung — cách nhau bằng dấu phẩy)</span></label>
+        <input id="removeSelectors" class="mono" type="text" placeholder=".ads, .share-buttons, nav, footer, .next-chap-btn" />
+      </div>
+
+      <div class="field">
+        <label for="fetchMode">Chế độ tải trang</label>
+        <select id="fetchMode">
+          <option value="auto" selected>Tự động (tĩnh trước, browser nếu cần)</option>
+          <option value="static">Chỉ HTML tĩnh (nhanh)</option>
+          <option value="browser">Luôn dùng trình duyệt headless (site JS nặng)</option>
+        </select>
+      </div>
+
+      <div class="stealth-suggest" id="stealthSuggest" hidden>
+        <label class="checkline">
+          <input type="checkbox" id="stealthToggle" checked />
+          Site này cần trình duyệt mới lấy được nội dung — bật thêm <strong>chế độ né chặn</strong> (giả lập trình duyệt thật kỹ hơn + xoay User-Agent + giãn cách giữa các request) cho lúc crawl thật?
+        </label>
+        <p class="hint">Chậm hơn 1 chút nhưng tăng khả năng qua được các site có chống bot cơ bản. Cần cài thêm gói (xem README) — nếu chưa cài, app sẽ báo rõ khi bắt đầu crawl.</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" id="testBtn" type="button">Test nội dung chương</button>
+        <button class="btn btn-primary btn-inline" id="applyBtn" type="button">Áp dụng &amp; tiếp tục →</button>
+      </div>
+      <p class="hint" id="testHintA" data-mode-only="a">Bấm "Test mục lục" trước để app biết chương đầu tiên nằm ở đâu, sau đó bấm "Test nội dung chương" sẽ tự lấy chương đó ra xem thử.</p>
+
+      <div class="preview-panel" id="previewPanel" hidden>
+        <div class="preview-title" id="previewTitle"></div>
+        <div class="preview-meta" id="previewMeta"></div>
+        <iframe id="previewFrame" title="Xem trước nội dung đã lọc" sandbox=""></iframe>
+        <details class="raw-html-details">
+          <summary>Xem HTML gốc đã lọc (để đối chiếu nếu preview hiển thị sai)</summary>
+          <textarea id="rawHtmlBox" class="mono" readonly></textarea>
+        </details>
+      </div>
+      <div class="preview-error" id="previewError" hidden></div>
+    </section>
+
+    <!-- BƯỚC 2 -->
+    <section class="card" id="step2" hidden>
+      <div class="card-head">
+        <span class="idx">2</span>
+        <h2>Hoàn tất &amp; tạo sách</h2>
+        <button class="btn-link" id="backBtn" type="button">← Chỉnh lại bước 1</button>
+      </div>
+
+      <div data-mode-only="a" id="metaAutoPreview" class="meta-auto-preview">
+        <p class="hint">Tên sách, tác giả, ảnh bìa đã tự lấy từ trang mục lục theo selector bạn chọn ở bước 1 — không cần nhập lại ở đây.</p>
+      </div>
+
+      <div data-mode-only="b">
+        <div class="grid2">
+          <div class="field">
+            <label for="bookTitle">Tên sách <span class="opt">(bắt buộc)</span></label>
+            <input id="bookTitle" type="text" placeholder="Ví dụ: Đấu La Đại Lục" />
+          </div>
+          <div class="field">
+            <label for="author">Tác giả</label>
+            <input id="author" type="text" placeholder="Tùy chọn" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="coverUrl">URL ảnh bìa</label>
+          <input id="coverUrl" type="text" placeholder="https://.../cover.jpg" />
+        </div>
+      </div>
+
+      <div data-mode-only="b">
+        <div class="field">
+          <label for="nextPageSelector">CSS/XPath selector — nút/link "chương kế"</label>
+          <div class="input-with-btn">
+            <input id="nextPageSelector" class="mono" type="text" placeholder='a.next-chap  hoặc  xpath://a[contains(text(),"Tiếp")]' />
+            <button class="btn btn-secondary btn-tiny" id="testNextBtn" type="button">Test 1 trang</button>
+            <button class="btn btn-secondary btn-tiny" id="testNextChainBtn" type="button">Test 5 trang liên tiếp</button>
+          </div>
+          <p class="hint">App tự bấm theo nút này tới khi <strong>disable</strong> (hết href, có <code>disabled</code>, <code>aria-disabled="true"</code>, hoặc class chứa "disabled") — tự nhận biết hết truyện. <strong>Nên dùng "Test 5 trang liên tiếp"</strong> vì chương 1 thường không có nút "Trước", dễ khiến test 1 trang "qua" nhưng vẫn sai từ chương 2. Nếu site dùng Tailwind (class không ổn định), gõ <code>xpath:</code> ở đầu rồi viết XPath tìm theo chữ, ví dụ <code>xpath://a[contains(text(),"Tiếp")]</code> — không cần chữ "xpath:" nếu biểu thức đã bắt đầu bằng <code>//</code>.</p>
+          <div class="test-next-result" id="testNextResult" hidden></div>
+        </div>
+        <div class="field">
+          <label for="lastPageSelector">CSS selector báo hiệu chắc chắn hết truyện <span class="opt">(tuỳ chọn — thường không cần)</span></label>
+          <input id="lastPageSelector" class="mono" type="text" placeholder=".the-end" />
+        </div>
+      </div>
+
+      <details class="advanced-details">
+        <summary>Tuỳ chọn nâng cao</summary>
+        <div class="field">
+          <label for="requestDelayMs">Giãn cách giữa các request (ms) <span class="opt">(0 = không giãn cách)</span></label>
+          <input id="requestDelayMs" type="text" inputmode="numeric" value="0" style="max-width:120px" />
+        </div>
+        <div class="field">
+          <label for="cookie">Cookie <span class="opt">(nếu trang cần đăng nhập)</span></label>
+          <input id="cookie" class="mono" type="text" placeholder="session=abc123; other=xyz" />
+        </div>
+        <div class="field">
+          <label for="customCss">CSS tuỳ chỉnh cho epub <span class="opt">(để trống = dùng CSS mặc định có sẵn cho chương/tiêu đề)</span></label>
+          <textarea id="customCss" class="mono" rows="6" placeholder="body { font-family: serif; } ..."></textarea>
+        </div>
+      </details>
+
+      <div class="provider-save-bar">
+        <input id="providerName" class="mono" type="text" placeholder="Tên provider, vd: truyenyy.co" />
+        <button class="btn btn-secondary btn-tiny" id="saveProviderBtn" type="button">Lưu / cập nhật provider</button>
+        <button class="btn btn-tiny btn-danger" id="deleteProviderBtn" type="button" hidden>Xoá provider này</button>
+      </div>
+      <p class="hint" id="providerSaveHint">Lưu lại bộ selector này để lần sau chọn nhanh từ dropdown ở bước 1, không cần dò lại từ đầu. Không lưu thì lần này vẫn dùng bình thường — không bắt buộc.</p>
+
+      <div class="btn-row">
+        <button class="btn btn-primary btn-inline" id="generateBtn" type="button">Đóng sách EPUB</button>
+        <button class="btn btn-danger btn-inline" id="cancelBtn" type="button" hidden>Dừng</button>
+      </div>
+      <div class="status" id="status" hidden>
+        <div class="status-line" id="statusLine">Đang bắt đầu…</div>
+        <div class="stack" id="stack"></div>
+      </div>
+      <a class="btn btn-download" id="downloadLink" href="#" hidden download>Tải file .epub</a>
+    </section>
+
+  </main>
+
+  <footer class="foot">Chạy local — không dữ liệu nào rời khỏi máy bạn ngoài các trang bạn chỉ định crawl.</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

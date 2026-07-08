@@ -1,0 +1,14 @@
+node_modules/
+
+# Dữ liệu runtime — sách đang crawl/đã xong, provider đã lưu. Không đưa vào git vì đây là
+# dữ liệu cá nhân sinh ra lúc chạy app, không phải code của project.
+output/
+data/
+
+# Playwright browser cache nếu lỡ chạy `npx playwright install` ngoài Docker khi dev local
+.cache/
+ms-playwright/
+
+npm-debug.log*
+.DS_Store
+.env

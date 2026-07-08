@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.DS_Store
+
+# Dữ liệu local — KHÔNG đóng gói vào image (mỗi lần build sẽ đóng luôn tiến độ crawl/epub
+# cũ của bạn vào image, làm image phình to và rò rỉ dữ liệu không cần thiết). Data thật sẽ
+# đến từ volume lúc `docker run`, không phải từ image.
+output
+data
+
+# Docs/khác không cần trong image chạy
+README.md
+*.md

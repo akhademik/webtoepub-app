@@ -1,0 +1,25 @@
+{
+  "name": "webtoepub-app",
+  "version": "1.0.0",
+  "description": "Tự tạo EPUB từ website truyện bằng CSS selector tùy chỉnh, lấy cảm hứng từ extension WebToEpub.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node -e \"try{require('playwright').chromium}catch(e){console.log('\\n[Lưu ý] Chưa cài trình duyệt Playwright. Chạy: npx playwright install chromium\\n')}\""
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "axios": "^1.7.7",
+    "express": "^4.19.2",
+    "jszip": "^3.10.1",
+    "@xmldom/xmldom": "^0.8.10",
+    "playwright": "^1.47.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "optionalDependencies": {
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
