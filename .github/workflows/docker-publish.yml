@@ -10,7 +10,7 @@ on:
 env:
   # Đổi thành username Docker Hub của bạn, hoặc set qua Settings > Secrets and variables >
   # Actions > Variables (DOCKERHUB_IMAGE) nếu không muốn hardcode ở đây.
-  IMAGE_NAME: ${{ vars.DOCKERHUB_IMAGE || 'your-dockerhub-username/webtoepub-app' }}
+  IMAGE_NAME: ${{ vars.DOCKERHUB_IMAGE || 'hajtran/webtoepub-app' }}
 
 jobs:
   build-and-push:
